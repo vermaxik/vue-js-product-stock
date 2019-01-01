@@ -1,8 +1,74 @@
+Vue.component('product-review', {
+  template: `
+  <div>
+    <div v-if="errors.length">
+      <ul>
+        <li v-for="error in errors">{{error}}</li>
+      </ul>
+    </div>
+    <form class="review-form" @submit.prevent="onSubmit">
+      <p>
+        <label for="name">Name:</label>
+        <input id="name" v-model="name" placeholder="name">
+      </p>
+
+      <p>
+        <label for="review">Review:</label>
+        <textarea id="review" v-model="review"></textarea>
+      </p>
+
+      <p>
+        <label for="rating">Rating:</label>
+        <select id="rating" v-model.number="rating">
+          <option>5</option>
+          <option>4</option>
+          <option>3</option>
+          <option>2</option>
+          <option>1</option>
+        </select>
+      </p>
+
+      <p>
+        <input type="submit" value="Submit">
+      </p>
+
+    </form>
+  </div>`,
+  data() {
+    return {
+      name: null,
+      review: null,
+      rating: null,
+      errors: []
+    }
+  },
+  methods: {
+    onSubmit() {
+      if(this.name && this.review && this.rating) {
+        let productReview = {
+          name: this.name,
+          review: this.review,
+          rating: this.rating
+        }
+        this.$emit('review-submited', productReview)
+        this.name = null
+        this.review = null
+        this.rating = null
+      } else {
+        if(!this.name) this.errors.push("Name is required")
+        if(!this.review) this.errors.push("Review is required")
+        if(!this.rating) this.errors.push("Rating is required")
+      }
+    }
+  }
+})
+
 Vue.component('product', {
   props: {
     premium: {
       type: Boolean,
-      required: true
+      required: true,
+      default: true
     }
   },
   template: `
@@ -14,7 +80,7 @@ Vue.component('product', {
       <div class="product-info">
         <h1>{{ title }}</h1>
         <p v-if="inStock">In stock</p>
-        <p v-else 
+        <p v-else
            :style="{ textDecoration: 'line-through' }">Out of Stock</p>
 
         <ul>
@@ -38,6 +104,20 @@ Vue.component('product', {
           Add to Cart
         </button>
       </div>
+
+      <div>
+        <h2>Reviews</h2>
+        <p v-if="!reviews.length">There are no reivews yet.</p>
+        <ul>
+          <li v-for="review in reviews">
+            <p>Name: {{review.name}}</p>
+            <p>Rating: {{review.rating}}</p>
+            <p>Review: {{review.review}}</p>
+          </li>
+        </ul>
+      </div>
+
+      <product-review @review-submited="addReview"></product-review>
     </div>
   `,
   data() {
@@ -59,7 +139,8 @@ Vue.component('product', {
           variantImage: './assets/images/blue-socks.jpg',
           variantQuantity: 12
         }
-      ]
+      ],
+      reviews: []
     }
   },
   methods: {
@@ -68,6 +149,9 @@ Vue.component('product', {
     },
     updateProduct(index) {
       this.selectedVariant = index
+    },
+    addReview(review) {
+      this.reviews.push(review)
     }
   },
   computed: {
